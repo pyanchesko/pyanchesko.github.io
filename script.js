@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
   ];
 
   let currentIndex = 0;
+  let touchStartY = 0;
+  let touchMoveY = 0;
 
   function createSwipeContent(content, backgroundColor, translateY) {
       const swipeContent = document.createElement("div");
@@ -45,26 +47,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateSwipeContent();
 
-  const hammer = new Hammer(container);
-  hammer.get("pan").set({ direction: Hammer.DIRECTION_VERTICAL });
+  container.addEventListener("touchstart", (e) => {
+      touchStartY = e.touches[0].clientY;
+  });
 
-  hammer.on("panmove", (e) => {
-      const deltaY = e.deltaY;
+  container.addEventListener("touchmove", (e) => {
+      e.preventDefault();
+      touchMoveY = e.touches[0].clientY - touchStartY;
       const swipeContents = container.getElementsByClassName("swipe-content");
 
       for (const content of swipeContents) {
           const translateY = parseFloat(content.style.transform.match(/-?\d+/)[0]);
-          const newTranslateY = translateY * 100 + deltaY;
+          const newTranslateY = translateY * 100 + touchMoveY;
           content.style.transform = `translateY(${newTranslateY}px)`;
           content.style.opacity = 1 - Math.abs(newTranslateY / container.offsetHeight);
       }
   });
 
-  hammer.on("panend", (e) => {
-      const deltaY = e.deltaY;
-      if (deltaY > 100 && currentIndex > 0) {
+  container.addEventListener("touchend", () => {
+      if (touchMoveY > 100 && currentIndex > 0) {
           navigateContent("down");
-      } else if (deltaY < -100 && currentIndex < swipeContents.length - 1) {
+      } else if (touchMoveY < -100 && currentIndex < swipeContents.length - 1) {
           navigateContent("up");
       } else {
           updateSwipeContent();
